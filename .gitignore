@@ -1,0 +1,5 @@
+# Venv Location
+venv/
+
+# Vosk Model
+model/
