@@ -1,5 +1,6 @@
 import time, ast
 import speech_recognition as sr
+import logging
 
 """
 Class for audio input and speech recognition using the Vosk API and SpeechRecognition library
@@ -24,6 +25,7 @@ class audioInputManager:
 
     def calibrate(self):
         with self.m as source:
+            logging.debug("Calibrating microphone...")
             print("A moment of silence, please...")
             self.r.adjust_for_ambient_noise(source)
             print("Set minimum energy threshold to {}".format(self.r.energy_threshold))

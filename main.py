@@ -8,6 +8,7 @@ if __name__ == "__main__":
     FMT = "[%(levelname)s] %(asctime)s - %(message)s"
     logging.basicConfig(level=logging.DEBUG, format=FMT)
     am = audioInputManager()
+    am.calibrate()
     prompt = am.listen()
     gpt = GPT()
     gpt.answer(prompt)

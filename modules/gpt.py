@@ -14,14 +14,16 @@ class GPT:
 
     The question is {question}
     
-    Only give the direct answer to the question. Do not provide any additional information that is not directly related to the question. If the question is ambiguous, you can ask for clarification.
+    Only give the direct answer to the question. Do not provide any additional information that is not directly related to the question. 
+    If the question is ambiguous, give a single question to the user to clarify the question.
+    This should be formatted to be output by a text to speech device
     """
     FORMATTED_TEMPLATE: PromptTemplate
 
     def __init__(self) -> None:
         logging.debug("Loading GPT Model")
         self.FORMATTED_TEMPLATE = PromptTemplate.from_template(self.TEMPLATE)
-        self.MODEL = LlamaCpp(model_path="E:\Code Projects\Ding VA\llm\capybarahermes-2.5-mistral-7b.Q4_K_M.gguf", n_gpu_layers=-1, n_batch=1024, n_ctx=2048, f16_kv=True, verbose=True)  # type: ignore
+        self.MODEL = LlamaCpp(model_path="E:\Code Projects\Ding VA\llm\capybarahermes-2.5-mistral-7b.Q4_K_M.gguf", n_gpu_layers=-1, n_batch=1024, n_ctx=2048, f16_kv=True, verbose=False)  # type: ignore
         self.chain = (
             RunnablePassthrough()
             | self.FORMATTED_TEMPLATE
@@ -32,6 +34,6 @@ class GPT:
         return
 
     def answer(self, question: str):
+        logging.debug("Answering question")
         result = self.chain.invoke({"question": question})
         print(f"The reply is: {result}")
-        logging.debug("Answering question")
