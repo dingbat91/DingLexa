@@ -1,5 +1,12 @@
 # Venv Location
 venv/
 
-# Vosk Model
+# Vosk & LLM Models
 model/
+llm/
+
+#enviroment variables
+.env
+
+# Python pycache
+__pycache__/
