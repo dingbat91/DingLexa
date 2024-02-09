@@ -1,6 +1,7 @@
 import time, ast
 import speech_recognition as sr
 import logging
+import pyttsx3
 
 """
 Class for audio input and speech recognition using the Vosk API and SpeechRecognition library
@@ -10,6 +11,7 @@ Class for audio input and speech recognition using the Vosk API and SpeechRecogn
 class audioInputManager:
     r: sr.Recognizer
     m: sr.Microphone
+    v: pyttsx3.Engine
 
     """
     contructor
@@ -18,6 +20,7 @@ class audioInputManager:
     def __init__(self):
         self.r = sr.Recognizer()
         self.m = sr.Microphone()
+        self.v = pyttsx3.init()
 
     """
     calibrates the microphone for ambient noise
@@ -49,6 +52,10 @@ class audioInputManager:
             except sr.RequestError as e:
                 print("Error; {0}".format(e))
                 return "REQUESTERROR"
+
+    def speak(self, text: str):
+        self.v.say(text)
+        self.v.runAndWait()
 
 
 if __name__ == "__main__":

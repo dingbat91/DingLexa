@@ -34,6 +34,11 @@ class GPT:
         return
 
     def answer(self, question: str):
-        logging.debug("Answering question")
-        result = self.chain.invoke({"question": question})
-        print(f"The reply is: {result}")
+        try:
+            logging.debug("Answering question")
+            result = self.chain.invoke({"question": question})
+            logging.debug(f"GPT Result String: {result}")
+            return result
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            return "ERROR"
