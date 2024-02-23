@@ -10,3 +10,4 @@ llm/
 
 # Python pycache
 __pycache__/
+.cache

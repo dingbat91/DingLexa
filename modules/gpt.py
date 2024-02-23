@@ -1,44 +1,58 @@
-from langchain.llms.llamacpp import LlamaCpp
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
-from langchain_core.output_parsers.string import StrOutputParser
 import logging
+import autogen
+from autogen import AssistantAgent, UserProxyAgent
 
 
 class GPT:
-    MODEL: LlamaCpp
-    TEMPLATE = """
-    You are an assistant that can help with a variety of tasks.
-
-    take the following question and do you best to answer it. Avoid using statements without evidence or that are not supported by the text. If you are unsure, you can say "I don't know" or "I'm not sure".
-
-    The question is {question}
-    
-    Only give the direct answer to the question. Do not provide any additional information that is not directly related to the question. 
-    If the question is ambiguous, give a single question to the user to clarify the question.
-    This should be formatted to be output by a text to speech device
-    """
-    FORMATTED_TEMPLATE: PromptTemplate
-
     def __init__(self) -> None:
-        logging.debug("Loading GPT Model")
-        self.FORMATTED_TEMPLATE = PromptTemplate.from_template(self.TEMPLATE)
-        self.MODEL = LlamaCpp(model_path="E:\Code Projects\Ding VA\llm\capybarahermes-2.5-mistral-7b.Q4_K_M.gguf", n_gpu_layers=-1, n_batch=1024, n_ctx=2048, f16_kv=True, verbose=False)  # type: ignore
-        self.chain = (
-            RunnablePassthrough()
-            | self.FORMATTED_TEMPLATE
-            | self.MODEL
-            | StrOutputParser()
+        self.CONFIG = {
+            "config_list": [
+                {
+                    "model": "argilla_capybarahermes-2.5-mistral-7b",
+                    "base_url": "http://127.0.0.1:8000/v1",
+                    "api_key": "NULL",
+                }
+            ],
+            "timeout": 120,
+        }
+        self.USERPROXY = UserProxyAgent(
+            name="User",
+            llm_config=self.CONFIG,
+            human_input_mode="NEVER",
+            max_consecutive_auto_reply=10,
+            code_execution_config=False,
         )
-        logging.debug("GPT Model Loaded")
-        return
+        self.ASSISTANT = AssistantAgent(
+            name="Assistant",
+            llm_config=self.CONFIG,
+            human_input_mode="NEVER",
+            system_message="You are a helpful assistant, answering any questions given as best as you are able. If you are unsure of the answer say 'I don't know' and do not give guess. Reply with the answer in a style readable to a text to speech programme finishing with the word 'TERMINATE' when the task is done",
+        )
+        self.USERPROXY._is_termination_msg = lambda x: x.get("content", "") and x.get(
+            "content", ""
+        ).rstrip().endswith("TERMINATE")
 
-    def answer(self, question: str):
+    async def answer(self, question: str):
         try:
-            logging.debug("Answering question")
-            result = self.chain.invoke({"question": question})
-            logging.debug(f"GPT Result String: {result}")
-            return result
+            await self.USERPROXY.a_initiate_chat(self.ASSISTANT, message=question)
+            last_message = self.USERPROXY.last_message(self.ASSISTANT)
+            if last_message:
+                formatted_last_message: str = last_message["content"].rstrip(
+                    " TERMINATE"
+                )
+                return formatted_last_message
+            else:
+                raise Exception("No final message")
         except Exception as e:
-            logging.error(f"Error: {e}")
-            return "ERROR"
+            logging.debug(f"Error: {e}")
+            return "REQUESTERROR"
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    gpt = GPT()
+    gpt.USERPROXY.initiate_chat(gpt.ASSISTANT, message="What is the capital of France?")
+    last_message = gpt.USERPROXY.last_message(gpt.ASSISTANT)
+    if last_message:
+        logging.debug(f"Last message: {last_message['content'].rstrip(' TERMINATE')}")
+    # result = gpt.answer("What is the capital of France?")
